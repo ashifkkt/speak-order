@@ -2,60 +2,49 @@ import React from "react";
 
 const PlanHeader = () => {
   return (
-    <div className="bg-gray-50 p-8">
-      <div className="max-w-6xl ">
-        <h2 className="text-3xl font-bold text-black mb-6">
-          Business Plan
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div>
-            <label className="block text-gray-600 text-sm mb-2">
-              Business Name
-            </label>
-            <input
-              type="text"
-              className="w-full p-3 border border-gray-200 rounded-lg bg-white text-gray-700"
-                          defaultValue="Jhon Doe"
-                          disabled
-            />
-          </div>
-          
-          <div>
-            <label className="block text-gray-600 text-sm mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              className="w-full p-3 border border-gray-200 rounded-lg bg-white text-gray-700"
-                          defaultValue="jhondoe99@gmail.com"
-                          disabled
-            />
-          </div>
-          
-          <div>
-            <label className="block text-gray-600 text-sm mb-2">
-              Contact Number
-            </label>
-            <input
-              type="tel"
-              className="w-full p-3 border border-gray-200 rounded-lg bg-white text-gray-700"
-                          defaultValue="+91 5652 666 994"
-                          disabled
-            />
-          </div>
+    <div
+      className="w-full bg-white rounded-md border border-gray-200 mx-auto mt-8 sm:mt-12 lg:mt-16"
+      style={{
+        maxWidth: "1280px",
+        border: "0.8px solid #D6D6D6",
+        borderRadius: "7px",
+      }}
+    >
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-200 py-6">
+        <div className="flex flex-col justify-center items-center text-center p-4">
+          <h3 className="text-[16.1px] leading-[18.4px] font-medium text-black font-inter">
+            Business Name
+          </h3>
+          <p className="text-gray-500 text-[16.1px] leading-[23px] font-medium font-inter">
+            Jhon Doe
+          </p>
         </div>
-        
-        <div>
-          <label className="block text-gray-600 text-sm mb-2">
-            Addresss
-          </label>
-          <input
-            type="text"
-            className="w-full p-3 border border-gray-200 rounded-lg bg-white text-gray-700"
-                      defaultValue="RJ Street,Washington,Newyork"
-                      disabled
-          />
+
+        <div className="flex flex-col justify-center items-center text-center p-4">
+          <h3 className="text-[16.1px] leading-[18.4px] font-medium text-black font-inter">
+            Email
+          </h3>
+          <p className="text-gray-500 text-[16.1px] leading-[23px] font-medium font-inter">
+            jhondoe99@gmail.com
+          </p>
+        </div>
+
+        <div className="flex flex-col justify-center items-center text-center p-4">
+          <h3 className="text-[16.1px] leading-[18.4px] font-medium text-black font-inter">
+            Address
+          </h3>
+          <p className="text-gray-500 text-[16.1px] leading-[23px] font-medium font-inter">
+            RJ Street, Washington, <br /> New York 654785
+          </p>
+        </div>
+
+        <div className="flex flex-col justify-center items-center text-center p-4">
+          <h3 className="text-[16.1px] leading-[18.4px] font-medium text-black font-inter">
+            Contact Number
+          </h3>
+          <p className="text-gray-500 text-[16.1px] leading-[23px] font-medium font-inter">
+            +91 7347 838 749
+          </p>
         </div>
       </div>
     </div>
