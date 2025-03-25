@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 // Base API configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.speakorder.com';
+const API_BASE_URL = import.meta.env.VITE_APP_BASE_URL || 'https://api.speakorder.com';
+
+const TOKEN=import.meta.env.VITE_BASE_TOKEN
 
 // Create axios instance with default config
 const api = axios.create({
@@ -14,7 +16,7 @@ const api = axios.create({
 // Request interceptor for adding auth token to requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('auth_token');
+    const token = TOKEN ||  localStorage.getItem('auth_token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
@@ -24,6 +26,7 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
 
 // Response interceptor for handling common errors
 api.interceptors.response.use(

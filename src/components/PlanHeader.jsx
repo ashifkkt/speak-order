@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 
-const PlanHeader = () => {
+const PlanHeader = ({ data }) => {
+
   return (
     <div
       className="w-full bg-white rounded-md border border-gray-200 mx-auto mt-8 sm:mt-12 lg:mt-16"
@@ -16,7 +17,7 @@ const PlanHeader = () => {
             Business Name
           </h3>
           <p className="text-gray-500 text-[16.1px] leading-[23px] font-medium font-inter">
-            Jhon Doe
+            {data?.business_name}
           </p>
         </div>
 
@@ -25,7 +26,7 @@ const PlanHeader = () => {
             Email
           </h3>
           <p className="text-gray-500 text-[16.1px] leading-[23px] font-medium font-inter">
-            jhondoe99@gmail.com
+           {data?.email}
           </p>
         </div>
 
@@ -34,7 +35,7 @@ const PlanHeader = () => {
             Address
           </h3>
           <p className="text-gray-500 text-[16.1px] leading-[23px] font-medium font-inter">
-            RJ Street, Washington, <br /> New York 654785
+            {data?.address}
           </p>
         </div>
 
@@ -43,7 +44,7 @@ const PlanHeader = () => {
             Contact Number
           </h3>
           <p className="text-gray-500 text-[16.1px] leading-[23px] font-medium font-inter">
-            +91 7347 838 749
+            {data?.phone_number}
           </p>
         </div>
       </div>

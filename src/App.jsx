@@ -1,12 +1,36 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PayAsYouGoCard from "./components/Card";
 import PlanHeader from "./components/PlanHeader";
 import PrepaidCard from "./components/PrepaidCard";
 import OrderSummary from "./components/OrderSummary";
 import SubscriptionCard from "./components/SubscriptionCard";
+import apiService from "./components/api";
 
 const App = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [prepaidBundle, setPrepaidBundle] = useState({});
+  const [monthlyPlan, setMonthlyPlan] = useState({});
+  const [payAsPlan, setPayAsPlan] = useState({});
+  const [userDetails, setUserDetails] = useState({});
+
+  const fetchPlan = () => {
+    apiService.get("business/subscriptions-list").then((res) => {
+      setPrepaidBundle(res.data["Prepaid Bundle"]);
+      setMonthlyPlan(res.data["Subscription Plan"]);
+      setPayAsPlan(res.data["Pay As You Go"]);
+    });
+  };
+
+  const fetchUserDetails = () => {
+    apiService.get("business/payment/business-details").then((res) => {
+      setUserDetails(res.data);
+    });
+  };
+
+  useEffect(() => {
+    fetchPlan();
+    fetchUserDetails();
+  }, []);
 
   const handleSelectPlan = (planName) => {
     setSelectedPlan(planName);
@@ -29,7 +53,7 @@ const App = () => {
         </div>
 
         {/* Business Information Section */}
-        <PlanHeader />
+        <PlanHeader data={userDetails} />
 
         <div className="mt-12">
           <h2 className="text-2xl font-bold mb-2">Choose Your Plan</h2>
@@ -45,19 +69,26 @@ const App = () => {
                 className="w-full flex justify-center cursor-pointer"
                 onClick={() => handleSelectPlan("Pay as You Go")}
               >
-                <PayAsYouGoCard isSelected={selectedPlan === "Pay as You Go"} />
+                <PayAsYouGoCard
+                  data={payAsPlan}
+                  isSelected={selectedPlan === "Pay as You Go"}
+                />
               </div>
               <div
                 className="w-full flex justify-center cursor-pointer"
                 onClick={() => handleSelectPlan("Prepaid Bundle")}
               >
-                <PrepaidCard isSelected={selectedPlan === "Prepaid Bundle"} />
+                <PrepaidCard
+                  data={prepaidBundle}
+                  isSelected={selectedPlan === "Prepaid Bundle"}
+                />
               </div>
               <div
                 className="w-full flex justify-center cursor-pointer"
                 onClick={() => handleSelectPlan("Subscription")}
               >
                 <SubscriptionCard
+                  data={monthlyPlan}
                   isSelected={selectedPlan === "Subscription"}
                 />
               </div>
