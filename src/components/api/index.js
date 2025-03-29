@@ -1,157 +1,166 @@
 import axios from 'axios';
 
-// Base API configuration
-const API_BASE_URL = import.meta.env.VITE_APP_BASE_URL || 'https://api.speakorder.com';
-
-const TOKEN=import.meta.env.VITE_BASE_TOKEN
-
-// Create axios instance with default config
-const api = axios.create({
-  baseURL: API_BASE_URL,
+// Create Axios instance with default configuration
+const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_APP_BASE_URL,
+  timeout: 15000, // 15 seconds timeout
   headers: {
     'Content-Type': 'application/json',
-  },
+    'Accept': 'application/json',
+  }
 });
 
-// Request interceptor for adding auth token to requests
-api.interceptors.request.use(
-  (config) => {
-    const token = TOKEN ||  localStorage.getItem('auth_token');
+// Request interceptor for API calls
+apiClient.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem('auth_token') || import.meta.env.VITE_BASE_TOKEN;
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
+  error => {
+    console.error('API request error:', error);
     return Promise.reject(error);
   }
 );
 
-
-// Response interceptor for handling common errors
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    // Handle token expiration - attempt to refresh token if available
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+// Response interceptor for API calls
+apiClient.interceptors.response.use(
+  response => {
+    // Any status code within the range of 2xx will trigger this function
+    return response;
+  },
+  error => {
+    // Any status codes outside the range of 2xx will trigger this function
+    let errorMessage = 'An unexpected error occurred';
+    
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      const { status, data } = error.response;
       
-      try {
-        // Attempt to refresh the token
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-            refresh_token: refreshToken
-          });
-          
-          if (response.data.token) {
-            localStorage.setItem('auth_token', response.data.token);
-            api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-            return api(originalRequest);
-          }
-        }
-      } catch (refreshError) {
-        // Handle refresh token failure
-        console.error('Token refresh failed:', refreshError);
-        // Clear tokens and redirect to login
+      if (status === 401) {
+        // Handle 401 Unauthorized
+        console.error('Authentication failed. Please check your credentials.');
+        errorMessage = 'Authentication failed. Please log in again.';
+        
+        // If token expired, clear it and redirect to login
         localStorage.removeItem('auth_token');
-        localStorage.removeItem('refresh_token');
-        window.location.href = '/login';
+      } else if (status === 403) {
+        // Handle 403 Forbidden
+        errorMessage = 'You do not have permission to access this resource.';
+      } else if (status === 404) {
+        // Handle 404 Not Found
+        errorMessage = 'The requested resource was not found.';
+      } else if (status >= 500) {
+        // Handle server errors
+        errorMessage = 'Server error. Please try again later.';
       }
+      
+      // Use error message from response if available
+      if (data && data.message) {
+        errorMessage = data.message;
+      }
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('No response received:', error.request);
+      errorMessage = 'No response from server. Please check your internet connection.';
+    } else {
+      // Something happened in setting up the request that triggered an error
+      console.error('Request setup error:', error.message);
+      errorMessage = error.message;
     }
     
-    // Generic error handler
-    const errorMessage = error.response?.data?.message || 'An unexpected error occurred';
-    console.error('API Error:', errorMessage);
+    // Add error message to the error object for easier access
+    error.displayMessage = errorMessage;
     
     return Promise.reject(error);
   }
 );
 
-// API utility functions
+// API service with helper methods
 const apiService = {
-  // Authentication
-  login: async (email, password) => {
-    const response = await api.post('/auth/login', { email, password });
-    
-    if (response.data.token) {
-      localStorage.setItem('auth_token', response.data.token);
-      if (response.data.refresh_token) {
-        localStorage.setItem('refresh_token', response.data.refresh_token);
-      }
+  // GET request
+  get: async (url, params = {}) => {
+    try {
+      const response = await apiClient.get(url, { params });
+      return response.data;
+    } catch (error) {
+      throw error;
     }
-    
-    return response.data;
   },
   
-  logout: () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('refresh_token');
+  // POST request with JSON body
+  post: async (url, data = {}) => {
+    try {
+      const response = await apiClient.post(url, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
   
-  // GET requests
-  get: async (endpoint, params = {}) => {
-    const response = await api.get(endpoint, { params });
-    return response.data;
+  // POST request with FormData
+  postForm: async (url, formData) => {
+    try {
+      const response = await apiClient.post(url, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
   
-  // POST requests
-  post: async (endpoint, data = {}) => {
-    const response = await api.post(endpoint, data);
-    return response.data;
+  // PATCH request
+  patch: async (url, data = {}) => {
+    try {
+      const response = await apiClient.patch(url, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
   
-  // PATCH requests
-  patch: async (endpoint, data = {}) => {
-    const response = await api.patch(endpoint, data);
-    return response.data;
+  // PATCH request with FormData
+  patchForm: async (url, formData) => {
+    try {
+      const response = await apiClient.patch(url, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
   
-  // PUT requests
-  put: async (endpoint, data = {}) => {
-    const response = await api.put(endpoint, data);
-    return response.data;
+  // PUT request
+  put: async (url, data = {}) => {
+    try {
+      const response = await apiClient.put(url, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
   
-  // DELETE requests
-  delete: async (endpoint) => {
-    const response = await api.delete(endpoint);
-    return response.data;
+  // DELETE request
+  delete: async (url) => {
+    try {
+      const response = await apiClient.delete(url);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
   
-  // Upload file
-  uploadFile: async (endpoint, file, onUploadProgress) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    const response = await api.post(endpoint, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      onUploadProgress: onUploadProgress ? 
-        (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          onUploadProgress(percentCompleted);
-        } : undefined
-    });
-    
-    return response.data;
-  },
-  
-  // Check if user is authenticated
-  isAuthenticated: () => {
-    return !!localStorage.getItem('auth_token');
-  },
-  
-  // Get current user info
-  getCurrentUser: async () => {
-    const response = await api.get('/user/profile');
-    return response.data;
-  }
+  // Get the Axios instance for custom use cases
+  getInstance: () => apiClient
 };
 
 export default apiService;

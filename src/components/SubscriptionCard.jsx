@@ -1,7 +1,42 @@
-import React from "react";
+import React, { useState } from "react";
 import { BadgeCheck, Target } from "lucide-react";
+import apiService from "../components/api";
 
-const SubscriptionCard = ({ data, isSelected }) => {
+const SubscriptionCard = ({ data, isSelected, onPlanSelect }) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSelectPlan = async () => {
+    // Check if there's a subscription to select
+    if (data?.subscriptions && data.subscriptions.length > 0) {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Get the subscription ID (there should be only one option for this card)
+        const subscriptionId = data.subscriptions[0].subscription_id;
+        
+        // Make API call to get subscription summary
+        const response = await apiService.get(`business/subscription-summary/${subscriptionId}`);
+        
+        // Pass the selected plan information to parent component
+        if (onPlanSelect) {
+          onPlanSelect({
+            type: "Subscription",
+            planId: subscriptionId,
+            planDetails: data.subscriptions[0],
+            summary: response
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching subscription summary:", err);
+        setError("Failed to load plan details. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <div
       className={`w-full min-h-[423.35px] rounded-[14.33px] border-[0.55px] shadow-custom p-6 mx-auto
@@ -55,13 +90,13 @@ const SubscriptionCard = ({ data, isSelected }) => {
           </div>
         </div>
 
-        {/* Features */}
+        {/* Features - Reverting to original Badge Check icons */}
         <ul className="space-y-3 mb-6 flex-grow">
           {data?.description_points?.map((item, idx) => {
             return (
               <li key={idx} className="flex items-start gap-2">
                 <div className="min-w-[18px] mt-1">
-                  <BadgeCheck />
+                  <BadgeCheck className={isSelected ? "text-white" : "text-gray-900"} size={18} />
                 </div>
                 <span
                   className={`text-[13.22px] leading-[20px] font-normal
@@ -73,6 +108,19 @@ const SubscriptionCard = ({ data, isSelected }) => {
             );
           })}
         </ul>
+        
+        {/* Loading and Error States */}
+        {loading && (
+          <div className={`text-sm mb-2 ${isSelected ? "text-gray-300" : "text-gray-500"}`}>
+            Loading plan details...
+          </div>
+        )}
+        
+        {error && (
+          <div className="text-sm text-red-500 mb-2">
+            {error}
+          </div>
+        )}
 
         {/* Button */}
         <button
@@ -82,6 +130,7 @@ const SubscriptionCard = ({ data, isSelected }) => {
               ? "bg-white text-[#3C3C3C] hover:bg-gray-100"
               : "border border-[#1A1A1A] text-[#1A1A1A] hover:bg-gray-50"
           }`}
+          onClick={handleSelectPlan}
         >
           Select Plan
         </button>

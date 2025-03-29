@@ -1,7 +1,6 @@
-import React, { useEffect } from "react";
+import React from "react";
 
 const PlanHeader = ({ data }) => {
-
   return (
     <div
       className="w-full bg-white rounded-md border border-gray-200 mx-auto mt-8 sm:mt-12 lg:mt-16"
@@ -26,7 +25,7 @@ const PlanHeader = ({ data }) => {
             Email
           </h3>
           <p className="text-gray-500 text-[16.1px] leading-[23px] font-medium font-inter">
-           {data?.email}
+            {data?.email}
           </p>
         </div>
 
