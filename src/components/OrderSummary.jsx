@@ -2,8 +2,30 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { payWithRazorpay } from "./api/razorPay";
 
-const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFailure, onBeginPayment }) => {
-  const summary = summaryData?.data || {};
+
+const OrderSummary = ({ selectedPlan, summaryData, planDetails, onPaymentSuccess, onPaymentFailure, onBeginPayment }) => {
+  // Debug log to see what data is coming in
+  console.log('OrderSummary - selectedPlan:', selectedPlan);
+  console.log('OrderSummary - summaryData:', summaryData);
+  console.log('OrderSummary - planDetails:', planDetails);
+  
+  // Extract values directly from the API response data
+  const apiData = summaryData?.data || {};
+  
+  // Use the exact structure from the API response shown in the example
+  const displayValues = {
+    selected_plan: apiData.selected_plan || selectedPlan || 'No Plan Selected',
+    total_minutes: apiData.total_minutes || '0',
+    price_per_minute: apiData.price_per_minute || '$0.00',
+    monthly_price: apiData.monthly_price || '',
+    total_price: apiData.total_price || '0.00',
+    sub_total: apiData.sub_total || '$0.00',
+    discount: apiData.discount || '$0',
+    card_save_charge: apiData.card_save_charge || ''
+  };
+  
+  console.log('OrderSummary - displayValues:', displayValues);
+
 
   const [orderDetails, setOrderDetails] = useState({});
   const [orderResponse, setOrderResponse] = useState({});
@@ -23,12 +45,12 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
       try {
         const sessionData = JSON.parse(savedSession);
         // If we have a saved session with this subscription ID, restore it
-        if (sessionData.subscription_id === summary.subscription_id) {
+        if (sessionData.subscription_id === summaryData?.data?.subscription_id) {
           setOrderDetails(sessionData.orderDetails || {});
-          if (sessionData.orderResponse && 
-              sessionData.orderResponse.razorpay_payment_id &&
-              sessionData.orderResponse.razorpay_order_id &&
-              sessionData.orderResponse.razorpay_signature) {
+          if (sessionData.orderResponse &&
+            sessionData.orderResponse.razorpay_payment_id &&
+            sessionData.orderResponse.razorpay_order_id &&
+            sessionData.orderResponse.razorpay_signature) {
             // If we have a complete response, process it
             setOrderResponse(sessionData.orderResponse);
           }
@@ -38,13 +60,15 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
         localStorage.removeItem('payment_session');
       }
     }
-  }, [summary.subscription_id]);
+  }, [summaryData?.data?.subscription_id]);
+
+
 
   // Save current payment session
   const savePaymentSession = (data = {}) => {
-    if (summary.subscription_id) {
+    if (summaryData.data.subscription_id) {
       const sessionData = {
-        subscription_id: summary.subscription_id,
+        subscription_id: summaryData?.data.subscription_id,
         selectedPlan,
         orderDetails: data.orderDetails || orderDetails,
         orderResponse: data.orderResponse || orderResponse,
@@ -55,11 +79,11 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
   };
 
   const fetchOrderId = async () => {
-    if (summary.subscription_id) {
+    if (summaryData.data.subscription_id) {
       try {
         setIsLoading(true);
         const formData = new FormData();
-        formData.append("subscription_id", summary.subscription_id);
+        formData.append("subscription_id", summaryData.data.subscription_id);
 
         const API_BASE_URL = import.meta.env.VITE_APP_BASE_URL;
         const token = localStorage.getItem("auth_token") || import.meta.env.VITE_BASE_TOKEN;
@@ -88,14 +112,14 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
       } catch (error) {
         console.error("Error fetching order details:", error);
         setIsLoading(false);
-        
+
         // Handle failure with appropriate error message
-        setPaymentStatus({ 
-          ...paymentStatus, 
+        setPaymentStatus({
+          ...paymentStatus,
           isFailed: true,
-          error: error.response?.data?.message || error.message || "Failed to create order" 
+          error: error.response?.data?.message || error.message || "Failed to create order"
         });
-        
+
         if (onPaymentFailure) {
           onPaymentFailure({
             error: error.response?.data?.message || error.message || "Failed to create order",
@@ -112,7 +136,7 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
       try {
         setIsLoading(true);
         setPaymentStatus({ ...paymentStatus, isPending: true });
-        
+
         const formData = new FormData();
         formData.append("order_id", orderResponse.razorpay_order_id);
         formData.append("payment_id", orderResponse.razorpay_payment_id);
@@ -131,7 +155,7 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
             },
           }
         );
-        
+
         if (response.data.status) {
           setSuccessMessage(response.data.message || "Payment successful");
           setPaymentStatus({
@@ -140,10 +164,10 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
             isFailed: false,
             error: ""
           });
-          
+
           // Clear the payment session after successful payment
           localStorage.removeItem('payment_session');
-          
+
           // Notify parent component about successful payment with complete response data
           if (onPaymentSuccess) {
             onPaymentSuccess({
@@ -156,14 +180,14 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
           }
         } else {
           const errorMessage = response.data.message || "Payment verification failed";
-          
+
           setPaymentStatus({
             isComplete: false,
             isPending: false,
             isFailed: true,
             error: errorMessage
           });
-          
+
           if (onPaymentFailure) {
             onPaymentFailure({
               error: errorMessage,
@@ -171,21 +195,21 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
             });
           }
         }
-        
+
         setIsLoading(false);
       } catch (error) {
         console.error("Error verifying payment:", error);
         setIsLoading(false);
-        
+
         const errorMessage = error.response?.data?.message || error.message || "Payment verification failed";
-        
+
         setPaymentStatus({
           isComplete: false,
           isPending: false,
           isFailed: true,
           error: errorMessage
         });
-        
+
         if (onPaymentFailure) {
           onPaymentFailure({
             error: errorMessage,
@@ -198,10 +222,10 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
 
   useEffect(() => {
     // Only fetch if we don't already have order details
-    if (summary.subscription_id && !orderDetails.order_id) {
+    if (summaryData.data.subscription_id && !orderDetails.order_id) {
       fetchOrderId();
     }
-  }, [summary.subscription_id]);
+  }, [summaryData.data.subscription_id]);
 
   useEffect(() => {
     if (orderResponse.razorpay_payment_id && orderResponse.razorpay_order_id && orderResponse.razorpay_signature) {
@@ -214,7 +238,7 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
   // Handle Razorpay payment errors
   const handlePaymentError = (errorData) => {
     console.error("Payment error:", errorData);
-    
+
     // Special handling for pending payments
     if (errorData.isPending) {
       setPaymentStatus({
@@ -225,7 +249,7 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
       });
       return;
     }
-    
+
     // Handle other errors
     setPaymentStatus({
       isComplete: false,
@@ -233,7 +257,7 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
       isFailed: true,
       error: errorData.error
     });
-    
+
     if (onPaymentFailure) {
       onPaymentFailure({
         error: errorData.error,
@@ -247,15 +271,15 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
   const handleProceedToCheckout = () => {
     if (orderDetails && orderDetails.order_id || orderDetails.subscription_id) {
       setPaymentStatus({ ...paymentStatus, isPending: true, error: "" });
-      
+
       // Notify parent that payment is starting
       if (onBeginPayment) {
         onBeginPayment();
       }
-      
+
       const orderData = {
-        ...(orderDetails?.order_id 
-          ? { order_id: orderDetails.order_id } 
+        ...(orderDetails?.order_id
+          ? { order_id: orderDetails.order_id }
           : { subscription_id: orderDetails?.subscription_id }),
         customer_id: orderDetails.customer_id,
         plan_type: selectedPlan
@@ -269,12 +293,12 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
       payWithRazorpay(orderData, nextFunc, handlePaymentError);
     } else {
       const errorMessage = "Order details not ready. Please try again.";
-      setPaymentStatus({ 
-        ...paymentStatus, 
-        isFailed: true, 
-        error: errorMessage 
+      setPaymentStatus({
+        ...paymentStatus,
+        isFailed: true,
+        error: errorMessage
       });
-      
+
       if (onPaymentFailure) {
         onPaymentFailure({
           error: errorMessage,
@@ -292,7 +316,7 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
       isFailed: false,
       error: ""
     });
-    
+
     // If we don't have order details, fetch them again
     if (!orderDetails.order_id) {
       fetchOrderId();
@@ -310,94 +334,91 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
               Selected Plan:
             </span>
             <span className="bg-[#343434] text-white px-2 py-1 rounded-[8px] text-[14px] leading-[18px] font-medium">
-              {summary.selected_plan || selectedPlan}
+              {displayValues.selected_plan}
             </span>
           </div>
 
-          {summary && (
-            <div className="space-y-4 mt-6">
-              {/* Plan details section */}
-              <div className="border-t border-gray-100 pt-4">
-                {summary.total_minutes && (
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-gray-600">Minutes</span>
-                    <span className="font-medium">{summary.total_minutes}</span>
-                  </div>
-                )}
-
-                {summary.price_per_minute && (
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-gray-600">
-                      Price per minute
-                    </span>
-                    <span className="font-medium">
-                      {summary.price_per_minute}
-                    </span>
-                  </div>
-                )}
-
-                {summary.monthly_price &&
-                  summary.monthly_price !== "$ 0.00" && (
-                    <div className="flex justify-between mb-2">
-                      <span className="text-sm text-gray-600">
-                        Monthly price
-                      </span>
-                      <span className="font-medium">
-                        {summary.monthly_price}
-                      </span>
-                    </div>
-                  )}
-
-                {summary.overage_rate && (
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-gray-600">Overage rate</span>
-                    <span className="font-medium">{summary.overage_rate}</span>
-                  </div>
-                )}
+          <div className="space-y-4 mt-6">
+            {/* Plan details section */}
+            <div className="border-t border-gray-100 pt-4">
+              {/* Minutes */}
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-gray-600">Minutes</span>
+                <span className="font-medium">
+                  {displayValues.total_minutes}
+                </span>
               </div>
 
-              {/* Payment summary section */}
-              <div className="border-t border-gray-100 pt-4">
+              {/* Price per minute */}
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-gray-600">Price per minute</span>
+                <span className="font-medium">
+                  {displayValues.price_per_minute}
+                </span>
+              </div>
+
+              {/* Monthly price - only show if available */}
+              {displayValues.monthly_price && (
                 <div className="flex justify-between mb-2">
-                  <span className="text-sm text-gray-600">Subtotal</span>
+                  <span className="text-sm text-gray-600">Monthly price</span>
                   <span className="font-medium">
-                    {summary.sub_total || "$0.00"}
+                    {displayValues.monthly_price}
                   </span>
                 </div>
+              )}
 
-                {summary.discount && summary.discount !== "$ 0" && (
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-gray-600">Discount</span>
-                    <span className="font-medium text-green-600">
-                      -{summary.discount}
-                    </span>
-                  </div>
-                )}
+              {/* Total price */}
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Total</span>
+                <span className="font-bold text-lg">
+                  ${displayValues.total_price}
+                </span>
+              </div>
+            </div>
 
-                {summary.card_save_charge && (
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-gray-600">Card fee</span>
-                    <span className="font-medium">
-                      {summary.card_save_charge}
-                    </span>
-                  </div>
-                )}
+            {/* Payment summary section */}
+            <div className="border-t border-gray-100 pt-4">
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-gray-600">Subtotal</span>
+                <span className="font-medium">
+                  {displayValues.sub_total}
+                </span>
+              </div>
 
-                <div className="border-t pt-3 mt-3">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Total</span>
-                    <span className="font-bold text-lg">
-                      ${summary.total_price || "0.00"}
-                    </span>
-                  </div>
+              {/* Discount - only show if available */}
+              {displayValues.discount && (
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm text-gray-600">Discount</span>
+                  <span className="font-medium text-green-600">
+                    -{displayValues.discount}
+                  </span>
+                </div>
+              )}
+
+              {/* Card fee - only show if available */}
+              {displayValues.card_save_charge && (
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm text-gray-600">Card fee</span>
+                  <span className="font-medium">
+                    {displayValues.card_save_charge}
+                  </span>
+                </div>
+              )}
+
+              <div className="border-t pt-3 mt-3">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Total</span>
+                  <span className="font-bold text-lg">
+                    ${displayValues.total_price}
+                  </span>
                 </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         {paymentStatus.isPending || isLoading ? (
-          <button 
+          <button
             disabled
             className="w-full py-2.5 px-6 bg-gray-500 text-white rounded-[8px] font-medium flex items-center justify-center gap-2 mt-6"
           >
@@ -408,7 +429,7 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
             Processing Payment...
           </button>
         ) : paymentStatus.isComplete ? (
-          <button 
+          <button
             disabled
             className="w-full py-2.5 px-6 bg-green-600 text-white rounded-[8px] font-medium flex items-center justify-center gap-2 mt-6"
           >
@@ -437,13 +458,13 @@ const OrderSummary = ({ selectedPlan, summaryData, onPaymentSuccess, onPaymentFa
             Proceed to Checkout
           </button>
         )}
-        
+
         {successMessage && !paymentStatus.isFailed && (
           <div className="mt-6 p-4 bg-green-100 text-green-800 rounded-md animate-fadeIn">
             <p>{successMessage}</p>
           </div>
         )}
-        
+
         {paymentStatus.isFailed && (
           <div className="mt-6 p-4 bg-red-100 text-red-800 rounded-md animate-fadeIn">
             <div className="flex items-start">

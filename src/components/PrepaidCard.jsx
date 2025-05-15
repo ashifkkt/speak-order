@@ -23,12 +23,25 @@ const PrepaidCard = ({ data, isSelected, onPlanSelect }) => {
         const subscriptionId = selectedSubscription.subscription_id;
         const summaryData = await apiService.get(`business/subscription-summary/${subscriptionId}`);
         
+        console.log("API response from subscription-summary (PrepaidCard):", summaryData);
+        
         // Pass selected plan information to parent component
         if (onPlanSelect) {
+          // Use the data directly from the API response
+          const planDetails = summaryData?.data || {};
+          
+          // Add any additional details from the subscription data
+          planDetails.subscription_id = subscriptionId;
+          planDetails.selected_plan = "Prepaid Bundle";
+          planDetails.display_name = selectedSubscription.display_name;
+          planDetails.minutes = selectedSubscription.minutes;
+          
+          console.log("Passing plan details to parent (PrepaidCard):", planDetails);
+          
           onPlanSelect({
             type: "Prepaid Bundle",
             planId: subscriptionId,
-            planDetails: selectedSubscription,
+            planDetails: planDetails,
             summary: summaryData
           });
         }
@@ -58,7 +71,7 @@ const PrepaidCard = ({ data, isSelected, onPlanSelect }) => {
 
   return (
     <div
-      className={`w-full min-h-[423.35px] rounded-[14.33px] border-[0.55px] shadow-custom p-5 mx-auto
+      className={`w-full min-h-[560.35px] rounded-[14.33px] border-[0.55px] shadow-custom p-5 mx-auto
       ${
         isSelected
           ? "bg-[#3C3C3C] border-gray-600 text-white"

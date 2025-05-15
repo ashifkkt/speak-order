@@ -60,7 +60,6 @@ const App = () => {
     if (tokenFromUrl) {
       // Store token in localStorage for future use
       localStorage.setItem("auth_token", tokenFromUrl);
-      console.log("Token extracted from URL and stored");
 
       // Optional: Remove token from URL for security
       // This creates a new URL without the token parameter
@@ -69,34 +68,8 @@ const App = () => {
     }
   }, []);
 
-  // Check for saved plan selection
-  useEffect(() => {
-    const savedSession = localStorage.getItem("plan_selection");
-    if (savedSession) {
-      try {
-        const sessionData = JSON.parse(savedSession);
-        if (sessionData.timestamp) {
-          // Check if session is less than 24 hours old
-          const sessionTime = new Date(sessionData.timestamp).getTime();
-          const now = new Date().getTime();
-          const hoursDiff = (now - sessionTime) / (1000 * 60 * 60);
-
-          if (hoursDiff < 24) {
-            // Restore session if it's fresh
-            setSelectedPlan(sessionData.selectedPlan);
-            setSubscriptionSummary(sessionData.summaryData);
-            setSelectedPlanDetails(sessionData.planDetails);
-          } else {
-            // Clear old session
-            localStorage.removeItem("plan_selection");
-          }
-        }
-      } catch (e) {
-        console.error("Error parsing saved plan selection", e);
-        localStorage.removeItem("plan_selection");
-      }
-    }
-  }, []);
+  // We're no longer using localStorage for plan selection to avoid data structure issues
+  // This ensures data is passed directly from selection to the OrderSummary component
 
   const fetchPlan = async () => {
     try {
@@ -126,15 +99,26 @@ const App = () => {
     fetchUserDetails();
   }, []);
 
-  // Save plan selection to localStorage
-  const savePlanSelection = (planData) => {
-    const sessionData = {
+  // Process plan data and prepare it for use
+  const processPlanData = (planData) => {
+    // Extract and normalize the data to ensure consistent structure
+    console.log("Processing plan data:", planData);
+    
+    // Make sure we have a valid summary object with a data property
+    const summaryData = planData.summary && typeof planData.summary === 'object' 
+      ? planData.summary 
+      : { data: {} };
+      
+    // Make sure planDetails is an object
+    const planDetails = planData.planDetails && typeof planData.planDetails === 'object'
+      ? planData.planDetails
+      : {};
+      
+    return {
       selectedPlan: planData.type,
-      summaryData: planData.summary,
-      planDetails: planData.planDetails,
-      timestamp: new Date().toISOString(),
+      summaryData: summaryData,
+      planDetails: planDetails,
     };
-    localStorage.setItem("plan_selection", JSON.stringify(sessionData));
   };
 
   // Handler for when a plan is selected from any card
@@ -142,17 +126,22 @@ const App = () => {
     // Skip if there's already an active plan with payment complete
     if (paymentStatus.isComplete) return;
 
-    // Store the selected plan type
-    setSelectedPlan(planData.type);
+    console.log("Raw plan data received:", planData);
 
-    // Store the subscription summary data (the entire API response)
-    setSubscriptionSummary(planData.summary);
+    // Process the plan data to ensure consistent structure
+    const processedData = processPlanData(planData);
+
+    // Store the selected plan type
+    setSelectedPlan(processedData.selectedPlan);
+    console.log("Selected plan:", processedData.selectedPlan);
+
+    // Store the subscription summary data
+    setSubscriptionSummary(processedData.summaryData);
+    console.log("Subscription summary:", processedData.summaryData);
 
     // Store the selected plan details
-    setSelectedPlanDetails(planData.planDetails);
-
-    // Save selection to localStorage for session recovery
-    savePlanSelection(planData);
+    setSelectedPlanDetails(processedData.planDetails);
+    console.log("Selected plan details:", processedData.planDetails);
 
     // Scroll to order summary on mobile
     if (window.innerWidth < 1024) {
@@ -175,9 +164,6 @@ const App = () => {
       responseData: paymentData.details?.data || null,
       error: null,
     });
-
-    // Clear plan selection from localStorage after successful payment
-    localStorage.removeItem("plan_selection");
 
     // Scroll to top to show the success message
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -234,14 +220,14 @@ const App = () => {
         planType === "Pay as You Go"
           ? { data: payAsPlan }
           : planType === "Prepaid Bundle"
-          ? { data: prepaidBundle }
-          : { data: monthlyPlan },
+            ? { data: prepaidBundle }
+            : { data: monthlyPlan },
       planDetails:
         planType === "Pay as You Go"
           ? payAsPlan
           : planType === "Prepaid Bundle"
-          ? prepaidBundle
-          : monthlyPlan,
+            ? prepaidBundle
+            : monthlyPlan,
     };
 
     handleSubscriptionSelected(planData);
@@ -293,9 +279,8 @@ const App = () => {
       </style>
       <div class="invoice-header">
         <h1>SpeakOrder - Invoice</h1>
-        <p>Transaction Date: ${
-          responseData.payment_date || new Date().toLocaleDateString()
-        }</p>
+        <p>Transaction Date: ${responseData.payment_date || new Date().toLocaleDateString()
+      }</p>
         <p>Invoice Generated: ${printDate}</p>
       </div>
       <div class="invoice-details">
@@ -305,30 +290,27 @@ const App = () => {
             <th>Plan Type</th>
             <td>${selectedPlan || ""}</td>
           </tr>
-          ${
-            responseData.plan_name
-              ? `<tr>
+          ${responseData.plan_name
+        ? `<tr>
             <th>Plan Name</th>
             <td>${responseData.plan_name}</td>
           </tr>`
-              : ""
-          }
-          ${
-            responseData.minutes
-              ? `<tr>
+        : ""
+      }
+          ${responseData.minutes
+        ? `<tr>
             <th>Minutes</th>
             <td>${responseData.minutes}</td>
           </tr>`
-              : ""
-          }
-          ${
-            responseData.price
-              ? `<tr>
+        : ""
+      }
+          ${responseData.price
+        ? `<tr>
             <th>Price</th>
             <td>${responseData.price}</td>
           </tr>`
-              : ""
-          }
+        : ""
+      }
         </table>
         
         <h2>Payment Details</h2>
@@ -341,14 +323,13 @@ const App = () => {
             <th>Order ID</th>
             <td>${paymentStatus.orderId || ""}</td>
           </tr>
-          ${
-            responseData.transaction_id
-              ? `<tr>
+          ${responseData.transaction_id
+        ? `<tr>
             <th>Transaction ID</th>
             <td>${responseData.transaction_id}</td>
           </tr>`
-              : ""
-          }
+        : ""
+      }
         </table>
       </div>
       <div class="invoice-footer">

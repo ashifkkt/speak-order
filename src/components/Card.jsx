@@ -12,19 +12,30 @@ const PayAsYouGoCard = ({ data, isSelected, onPlanSelect }) => {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Get the subscription ID (there should be only one option for this card)
-        const subscriptionId = data.subscriptions[0].subscription_id;
-        
+        const subscriptionId = data.subscriptions[0]?.subscription_id;
+
         // Make API call to get subscription summary
         const response = await apiService.get(`business/subscription-summary/${subscriptionId}`);
         
-        // Pass the selected plan information to parent component
+        console.log("API response from subscription-summary (PayAsYouGoCard):", response);
+
+        // Pass the selected plan information to parent component with proper data structure
         if (onPlanSelect) {
+          // Use the data directly from the API response
+          const planDetails = response?.data || {};
+          
+          // Add any additional details from the subscription data
+          planDetails.subscription_id = subscriptionId;
+          planDetails.selected_plan = "Pay as You Go";
+          
+          console.log("Passing plan details to parent (PayAsYouGoCard):", planDetails);
+
           onPlanSelect({
             type: "Pay as You Go",
             planId: subscriptionId,
-            planDetails: data.subscriptions[0],
+            planDetails: planDetails,
             summary: response
           });
         }
@@ -39,12 +50,11 @@ const PayAsYouGoCard = ({ data, isSelected, onPlanSelect }) => {
 
   return (
     <div
-      className={`w-full min-h-[423.35px] rounded-[14.33px] border-[0.55px] shadow-custom p-6 mx-auto
-      ${
-        isSelected
+      className={`w-full min-h-[560.35px] rounded-[14.33px] border-[0.55px] shadow-custom p-6 mx-auto
+      ${isSelected
           ? "bg-[#3C3C3C] border-gray-600 text-white"
           : "bg-white border-[#E7EBFF] text-gray-900"
-      }`}
+        }`}
     >
       <div className="flex flex-col h-full justify-between">
         <div>
@@ -54,7 +64,7 @@ const PayAsYouGoCard = ({ data, isSelected, onPlanSelect }) => {
               className={`w-[44px] h-[44px] rounded-[14.33px] flex items-center justify-center
             ${isSelected ? "bg-white" : "bg-black"}`}
             >
-             <Target className={`w-5 h-5 ${isSelected ? "text-black" : "text-white"}`} />
+              <Target className={`w-5 h-5 ${isSelected ? "text-black" : "text-white"}`} />
             </div>
           </div>
 
@@ -76,9 +86,8 @@ const PayAsYouGoCard = ({ data, isSelected, onPlanSelect }) => {
 
           {/* Price */}
           <div
-            className={`mb-8 mt-2 pb-8 border-b ${
-              isSelected ? "border-gray-600" : "border-[#E5E5E5]"
-            }`}
+            className={`mb-8 mt-2 pb-8 border-b ${isSelected ? "border-gray-600" : "border-[#E5E5E5]"
+              }`}
           >
             <span
               className={`text-[33.06px] leading-[100%] tracking-[-0.55px] font-medium font-outfit
@@ -104,14 +113,14 @@ const PayAsYouGoCard = ({ data, isSelected, onPlanSelect }) => {
               </li>
             ))}
           </ul>
-          
+
           {/* Loading and Error States */}
           {loading && (
             <div className={`text-sm mb-2 ${isSelected ? "text-gray-300" : "text-gray-500"}`}>
               Loading plan details...
             </div>
           )}
-          
+
           {error && (
             <div className="text-sm text-red-500 mb-2">
               {error}
@@ -121,15 +130,14 @@ const PayAsYouGoCard = ({ data, isSelected, onPlanSelect }) => {
 
         {/* Button */}
         <button
-          className={`w-full py-2.5 px-6 rounded-[8px] font-medium transition-colors
-          ${
-            isSelected
+          className={`w-full py-2.5 px-6 rounded-[8px] font-medium transition-colors mt-4.5
+          ${isSelected
               ? "bg-white text-[#3C3C3C] hover:bg-gray-100"
               : "border border-[#1A1A1A] text-[#1A1A1A] hover:bg-gray-50"
-          }`}
+            }`}
           onClick={handleSelectPlan}
         >
-          Select Plan
+          {isSelected ? "Selected" : "Select Plan"}
         </button>
       </div>
     </div>
