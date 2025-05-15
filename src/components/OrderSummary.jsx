@@ -10,9 +10,26 @@ const OrderSummary = ({ selectedPlan, summaryData, planDetails, onPaymentSuccess
   console.log('OrderSummary - planDetails:', planDetails);
   
   // Extract values directly from the API response data
-  const apiData = summaryData?.data || {};
+  // First, check if summaryData is properly structured
+  console.log('OrderSummary - Raw summaryData:', summaryData);
   
-  // Use the exact structure from the API response shown in the example
+  let apiData;
+  
+  // Handle different possible structures of summaryData
+  if (summaryData && summaryData.data) {
+    // Standard structure where summaryData has a data property
+    apiData = summaryData.data;
+  } else if (summaryData && typeof summaryData === 'object') {
+    // If summaryData itself contains the data
+    apiData = summaryData;
+  } else {
+    // Fallback to empty object
+    apiData = {};
+  }
+  
+  console.log('OrderSummary - processed apiData:', apiData);
+  
+  // Use the exact structure from the API response
   const displayValues = {
     selected_plan: apiData.selected_plan || selectedPlan || 'No Plan Selected',
     total_minutes: apiData.total_minutes || '0',
@@ -371,7 +388,7 @@ const OrderSummary = ({ selectedPlan, summaryData, planDetails, onPaymentSuccess
               <div className="flex justify-between items-center">
                 <span className="font-medium">Total</span>
                 <span className="font-bold text-lg">
-                  ${displayValues.total_price}
+                  ${displayValues.total_price.replace('$', '').trim()}
                 </span>
               </div>
             </div>
@@ -381,7 +398,7 @@ const OrderSummary = ({ selectedPlan, summaryData, planDetails, onPaymentSuccess
               <div className="flex justify-between mb-2">
                 <span className="text-sm text-gray-600">Subtotal</span>
                 <span className="font-medium">
-                  {displayValues.sub_total}
+                  {displayValues?.sub_total}
                 </span>
               </div>
 
