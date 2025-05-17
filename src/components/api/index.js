@@ -34,17 +34,17 @@ apiClient.interceptors.response.use(
   error => {
     // Any status codes outside the range of 2xx will trigger this function
     let errorMessage = 'An unexpected error occurred';
-    
+
     if (error.response) {
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx
       const { status, data } = error.response;
-      
+
       if (status === 401) {
         // Handle 401 Unauthorized
         console.error('Authentication failed. Please check your credentials.');
         errorMessage = 'Authentication failed. Please log in again.';
-        
+
         // If token expired, clear it and redirect to login
         localStorage.removeItem('auth_token');
       } else if (status === 403) {
@@ -57,7 +57,7 @@ apiClient.interceptors.response.use(
         // Handle server errors
         errorMessage = 'Server error. Please try again later.';
       }
-      
+
       // Use error message from response if available
       if (data && data.message) {
         errorMessage = data.message;
@@ -71,10 +71,10 @@ apiClient.interceptors.response.use(
       console.error('Request setup error:', error.message);
       errorMessage = error.message;
     }
-    
+
     // Add error message to the error object for easier access
     error.displayMessage = errorMessage;
-    
+
     return Promise.reject(error);
   }
 );
@@ -90,7 +90,7 @@ const apiService = {
       throw error;
     }
   },
-  
+
   // POST request with JSON body
   post: async (url, data = {}) => {
     try {
@@ -100,7 +100,7 @@ const apiService = {
       throw error;
     }
   },
-  
+
   // POST request with FormData
   postForm: async (url, formData) => {
     try {
@@ -114,7 +114,7 @@ const apiService = {
       throw error;
     }
   },
-  
+
   // PATCH request
   patch: async (url, data = {}) => {
     try {
@@ -124,7 +124,7 @@ const apiService = {
       throw error;
     }
   },
-  
+
   // PATCH request with FormData
   patchForm: async (url, formData) => {
     try {
@@ -138,7 +138,7 @@ const apiService = {
       throw error;
     }
   },
-  
+
   // PUT request
   put: async (url, data = {}) => {
     try {
@@ -148,7 +148,7 @@ const apiService = {
       throw error;
     }
   },
-  
+
   // DELETE request
   delete: async (url) => {
     try {
@@ -158,7 +158,7 @@ const apiService = {
       throw error;
     }
   },
-  
+
   // Get the Axios instance for custom use cases
   getInstance: () => apiClient
 };

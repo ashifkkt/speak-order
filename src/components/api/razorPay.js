@@ -7,7 +7,6 @@ const loadScript = src => {
         };
         script.onerror = () => {
             resolve(false);
-            console.log('error');
         };
         document.body.appendChild(script);
     });
@@ -17,7 +16,6 @@ const loadScript = src => {
 export const payWithRazorpay = async (order, nextFunc, errorCallback) => {
 
     const url = import.meta.env.VITE_RAZORPAY_SCRIPT_URL
-    console.log(order)
     const res = await loadScript(url);
 
     if (!res) {
@@ -31,19 +29,30 @@ export const payWithRazorpay = async (order, nextFunc, errorCallback) => {
     }
 
     try {
+        // Add debug log for order details
+        console.log('Razorpay orderDetails:', order);
+
         // Step 2: Call the Razorpay checkout form
         const options = {
             key: import.meta.env.VITE_RAZORPAY_KEY_ID, // This is Api key. you will get it from razorpay dashboard > account and settings > API keys
-            
+
             name: 'SpeakOrder',
-            order_id: order.order_id, // This is the `order_id` created in the backend
+            order_id: order.order_id,
+            subscription_id: order.subscription_id,
             description: 'SpeakOrder Subscription',
             customer_id: order.customer_id,
             save: 1,
             image: 'https://admin.dev.vanforces.com/static/media/VF_logo.8cdeffd1304416f59e86.png', // your project logo
             handler: function (response) {
-                console.log('Payment successful:', response);
-                nextFunc(response);
+                // Fix: Check if nextFunc exists and is a function before calling
+                if (typeof nextFunc === 'function') {
+                    nextFunc(response);
+                } else if (order.onSuccess && typeof order.onSuccess === 'function') {
+                    // Fallback to onSuccess if provided in order object
+                    order.onSuccess(response);
+                } else {
+                    console.error('No success callback provided for Razorpay payment');
+                }
                 return response;
             },
 
@@ -56,13 +65,13 @@ export const payWithRazorpay = async (order, nextFunc, errorCallback) => {
             notes: {
                 address: 'India',
                 plan_type: order.plan_type || '',
-                order_reference: order.order_id
+                order_reference: order.order_id || order.subscription_id
             },
             theme: {
                 color: '#158993',
             },
             modal: {
-                ondismiss: function() {
+                ondismiss: function () {
                     if (errorCallback) {
                         errorCallback({
                             error: 'Payment window was closed. You can try again when ready.',
@@ -72,6 +81,9 @@ export const payWithRazorpay = async (order, nextFunc, errorCallback) => {
                 }
             }
         };
+
+        // Add debug log for Razorpay options
+        console.log('Razorpay options:', options);
 
         // Step 4: Open Razorpay payment popup
         const rzp = new window.Razorpay(options);

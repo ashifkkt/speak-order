@@ -18,19 +18,15 @@ const PayAsYouGoCard = ({ data, isSelected, onPlanSelect }) => {
 
         // Make API call to get subscription summary
         const response = await apiService.get(`business/subscription-summary/${subscriptionId}`);
-        
-        console.log("API response from subscription-summary (PayAsYouGoCard):", response);
 
         // Pass the selected plan information to parent component with proper data structure
         if (onPlanSelect) {
           // Use the data directly from the API response
           const planDetails = response?.data || {};
-          
+
           // Add any additional details from the subscription data
           planDetails.subscription_id = subscriptionId;
           planDetails.selected_plan = "Pay as You Go";
-          
-          console.log("Passing plan details to parent (PayAsYouGoCard):", planDetails);
 
           onPlanSelect({
             type: "Pay as You Go",
@@ -40,7 +36,6 @@ const PayAsYouGoCard = ({ data, isSelected, onPlanSelect }) => {
           });
         }
       } catch (err) {
-        console.error("Error fetching subscription summary:", err);
         setError("Failed to load plan details. Please try again.");
       } finally {
         setLoading(false);
@@ -50,14 +45,14 @@ const PayAsYouGoCard = ({ data, isSelected, onPlanSelect }) => {
 
   return (
     <div
-      className={`w-full min-h-[560.35px] rounded-[14.33px] border-[0.55px] shadow-custom p-6 mx-auto
+      className={`w-full h-[560px] rounded-[14.33px] border-[0.55px] shadow-custom p-6 mx-auto
       ${isSelected
           ? "bg-[#3C3C3C] border-gray-600 text-white"
           : "bg-white border-[#E7EBFF] text-gray-900"
         }`}
     >
       <div className="flex flex-col h-full justify-between">
-        <div>
+        <div className="flex-grow">
           {/* Icon */}
           <div className="mb-4">
             <div
@@ -130,12 +125,13 @@ const PayAsYouGoCard = ({ data, isSelected, onPlanSelect }) => {
 
         {/* Button */}
         <button
-          className={`w-full py-2.5 px-6 rounded-[8px] font-medium transition-colors mt-4.5
+          className={`w-full py-2.5 px-6 rounded-[8px] font-medium transition-colors mt-6
           ${isSelected
               ? "bg-white text-[#3C3C3C] hover:bg-gray-100"
               : "border border-[#1A1A1A] text-[#1A1A1A] hover:bg-gray-50"
             }`}
           onClick={handleSelectPlan}
+          style={{ marginTop: 'auto' }}
         >
           {isSelected ? "Selected" : "Select Plan"}
         </button>

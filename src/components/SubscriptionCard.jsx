@@ -18,20 +18,16 @@ const SubscriptionCard = ({ data, isSelected, onPlanSelect }) => {
 
         // Make API call to get subscription summary
         const response = await apiService.get(`business/subscription-summary/${subscriptionId}`);
-        
-        console.log("API response from subscription-summary:", response);
 
         // Pass the selected plan information to parent component
         if (onPlanSelect) {
           // Use the data directly from the API response
           const planDetails = response?.data || {};
-          
+
           // Add any additional details from the subscription data
           planDetails.subscription_id = subscriptionId;
           planDetails.selected_plan = "Subscription";
-          
-          console.log("Passing plan details to parent:", planDetails);
-          
+
           onPlanSelect({
             type: "Subscription",
             planId: subscriptionId,
@@ -40,7 +36,6 @@ const SubscriptionCard = ({ data, isSelected, onPlanSelect }) => {
           });
         }
       } catch (err) {
-        console.error("Error fetching subscription summary:", err);
         setError("Failed to load plan details. Please try again.");
       } finally {
         setLoading(false);
@@ -56,8 +51,8 @@ const SubscriptionCard = ({ data, isSelected, onPlanSelect }) => {
           : "bg-white border-[#E7EBFF] text-gray-900"
         }`}
     >
-      <div className="flex flex-col h-full justify-between">
-        <div>
+      <div className="flex flex-col h-full justify-between min-h-[520px]">
+        <div className="flex-grow">
           {/* Icon */}
           <div className="mb-4">
             <div
@@ -69,8 +64,8 @@ const SubscriptionCard = ({ data, isSelected, onPlanSelect }) => {
             >
               <Target
                 className={`w-5 h-5 ${isSelected
-                    ? "text-black"
-                    : "text-white"
+                  ? "text-black"
+                  : "text-white"
                   }`}
               />
             </div>
@@ -137,8 +132,8 @@ const SubscriptionCard = ({ data, isSelected, onPlanSelect }) => {
           {/* Loading and Error States */}
           {loading && (
             <div className={`text-sm mb-2 ${isSelected
-                ? "text-gray-300"
-                : "text-gray-500"
+              ? "text-gray-300"
+              : "text-gray-500"
               }`}>
               Loading plan details...
             </div>
@@ -153,12 +148,13 @@ const SubscriptionCard = ({ data, isSelected, onPlanSelect }) => {
 
         {/* Button */}
         <button
-          className={`w-full py-2.5 px-6 rounded-[8px] font-medium transition-colors mt-7.5
-          ${isSelected
-              ? "bg-white text-[#3C3C3C] hover:bg-gray-100 mt-7"
+          className={`w-full py-2.5 px-6 rounded-[8px] font-medium transition-colors mt-6
+            ${isSelected
+              ? "bg-white text-[#3C3C3C] hover:bg-gray-100"
               : "border border-[#1A1A1A] text-[#1A1A1A] hover:bg-gray-50"
             }`}
           onClick={handleSelectPlan}
+          style={{ marginTop: 'auto' }}
         >
           {isSelected ? "Selected" : "Select Plan"}
         </button>

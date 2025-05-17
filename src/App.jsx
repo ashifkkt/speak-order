@@ -102,18 +102,17 @@ const App = () => {
   // Process plan data and prepare it for use
   const processPlanData = (planData) => {
     // Extract and normalize the data to ensure consistent structure
-    console.log("Processing plan data:", planData);
-    
+
     // Make sure we have a valid summary object with a data property
-    const summaryData = planData.summary && typeof planData.summary === 'object' 
-      ? planData.summary 
+    const summaryData = planData.summary && typeof planData.summary === 'object'
+      ? planData.summary
       : { data: {} };
-      
+
     // Make sure planDetails is an object
     const planDetails = planData.planDetails && typeof planData.planDetails === 'object'
       ? planData.planDetails
       : {};
-      
+
     return {
       selectedPlan: planData.type,
       summaryData: summaryData,
@@ -126,22 +125,22 @@ const App = () => {
     // Skip if there's already an active plan with payment complete
     if (paymentStatus.isComplete) return;
 
-    console.log("Raw plan data received:", planData);
+
 
     // Process the plan data to ensure consistent structure
     const processedData = processPlanData(planData);
 
     // Store the selected plan type
     setSelectedPlan(processedData.selectedPlan);
-    console.log("Selected plan:", processedData.selectedPlan);
+
 
     // Store the subscription summary data
     setSubscriptionSummary(processedData.summaryData);
-    console.log("Subscription summary:", processedData.summaryData);
+
 
     // Store the selected plan details
     setSelectedPlanDetails(processedData.planDetails);
-    console.log("Selected plan details:", processedData.planDetails);
+
 
     // Scroll to order summary on mobile
     if (window.innerWidth < 1024) {
@@ -415,11 +414,9 @@ const App = () => {
 
                   {responseData.minutes && (
                     <div className="flex justify-between mb-2">
-                      <span className="text-gray-500 dark:text-gray-400">
-                        Minutes
-                      </span>
-                      <span className="font-medium dark:text-white">
-                        {responseData.minutes}
+                      <span className="text-sm text-black">Minutes</span>
+                      <span className="font-medium text-black">
+                        {responseData.minutes || "N/A"}
                       </span>
                     </div>
                   )}
@@ -547,7 +544,7 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-white dark:bg-gray-900 dark:text-white font-Inter transition-colors duration-200">
+    <div className="min-h-screen w-full bg-[#F5F5F5] dark:bg-[#F5F5F5] dark:text-black font-Inter transition-colors duration-200">
       {/* <DarkModeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} /> */}
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -624,10 +621,10 @@ const App = () => {
                 </div>
               ) : (
                 /* Loaded Content */
-                <div className="flex flex-col lg:flex-row gap-10">
+                <div className="flex flex-col lg:flex-row gap-6">
                   {/* Container for the three plan cards */}
                   <div
-                    className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-10"
+                    className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch"
                     role="radiogroup"
                     aria-labelledby="plan-selection-heading"
                   >
@@ -636,7 +633,7 @@ const App = () => {
                       style={{ animationDelay: "0.1s" }}
                     >
                       <div
-                        className="w-full cursor-pointer"
+                        className="w-full cursor-pointer h-[560px]"
                         onClick={() =>
                           handleCardKeyboardInteraction("Pay as You Go")
                         }
@@ -663,7 +660,7 @@ const App = () => {
                       style={{ animationDelay: "0.2s" }}
                     >
                       <div
-                        className="w-full cursor-pointer"
+                        className="w-full cursor-pointer h-[560px]"
                         onClick={() =>
                           handleCardKeyboardInteraction("Prepaid Bundle")
                         }
@@ -690,7 +687,7 @@ const App = () => {
                       style={{ animationDelay: "0.3s" }}
                     >
                       <div
-                        className="w-full cursor-pointer"
+                        className="w-full cursor-pointer h-[560px]"
                         onClick={() =>
                           handleCardKeyboardInteraction("Subscription")
                         }
@@ -716,7 +713,7 @@ const App = () => {
 
                   {/* Order Summary */}
                   {selectedPlan && (
-                    <div className="w-full lg:w-1/4 flex-shrink-0 order-summary-section animate-fadeIn">
+                    <div className="w-full lg:w-1/3 flex-shrink-0 order-summary-section animate-fadeIn">
                       <OrderSummary
                         selectedPlan={selectedPlan}
                         planDetails={selectedPlanDetails}

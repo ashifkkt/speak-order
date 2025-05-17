@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const InvoiceSummary = ({ invoiceData = {} }) => {
   // Default data in case no props are passed
@@ -16,6 +17,8 @@ const InvoiceSummary = ({ invoiceData = {} }) => {
     lateFeeAmount = "$2",
     totalAmount = "$317"
   } = invoiceData;
+
+  const navigate = useNavigate();
 
   return (
     <div className="w-full bg-white rounded-lg shadow-sm border border-gray-100">
@@ -68,29 +71,29 @@ const InvoiceSummary = ({ invoiceData = {} }) => {
                 <span className="text-gray-700">Subtotal amount</span>
                 <span className="font-medium">{subtotalAmount}</span>
               </div>
-              
+
               <div className="flex justify-between py-2">
                 <span className="text-gray-700">Discount amount</span>
                 <span className="font-medium">{discountAmount}</span>
               </div>
-              
+
               <div className="flex justify-between py-2">
                 <span className="text-gray-700">Tax amount</span>
                 <span className="font-medium">{taxAmount}</span>
               </div>
-              
+
               <div className="flex justify-between py-2">
                 <span className="text-gray-700">Late fee amount</span>
                 <span className="font-medium">{lateFeeAmount}</span>
               </div>
-              
+
               <div className="border-t pt-4 mt-2">
                 <div className="flex justify-between font-medium">
                   <span>Total amount</span>
                   <span>{totalAmount}</span>
                 </div>
               </div>
-              
+
               <button className="w-full bg-black text-white py-3 px-4 rounded mt-4 hover:bg-gray-800 transition-colors">
                 Proceed to payment
               </button>
